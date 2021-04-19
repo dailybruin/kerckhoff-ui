@@ -15,7 +15,6 @@ import {
 } from "../components/UIFragments";
 import { Link } from "react-router-dom";
 import Column from "antd/lib/table/Column";
-import { create } from "lodash";
 
 export class Homepage extends React.Component<RouteChildrenProps> {
   render() {
@@ -116,9 +115,6 @@ export class HomepageInternal extends React.Component<
   };
 
   render() {
-    let pkgs = this.state.displayedPackages;
-    console.log(pkgs);
-
     // Set up table for ALL PACKAGES
     let tableColumns = [
       // Package Name
