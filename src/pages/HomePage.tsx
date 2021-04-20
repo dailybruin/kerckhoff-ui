@@ -115,6 +115,34 @@ export class HomepageInternal extends React.Component<
   };
 
   render() {
+    // Generate CSS id for link
+    function generateID(pkgName: string) {
+      return "link-" + pkgName.replace('.', '-');   // CSS doesn't like '.' in its ID selectors, so replace them with dashes
+    }
+
+    // Change to underline on hover
+    function underlineOnHover(id: string) {
+      let link = document.querySelector(`#${id}`) as HTMLElement;
+      link.style.textDecoration = "underline";
+    }
+
+    // Formats date in ISO format: YYYY-MM-DD HH:MM
+    function dateFormatter(date: Date): string {
+      let dateTimeString = "";
+
+      // Date portion
+      let isoStr = date.toISOString();
+      dateTimeString += isoStr.substring(0, isoStr.lastIndexOf('T'));   // Returns date as YYYY-MM-DD
+
+      dateTimeString += " ";
+
+      // Time portion
+      let timeStr = date.toTimeString();
+      dateTimeString += timeStr.substring(0, timeStr.indexOf(" "));     // Returns time as HH:MM
+
+      return dateTimeString;
+    }
+
     // Set up table for ALL PACKAGES
     let tableColumns = [
       // Package Name
@@ -123,7 +151,7 @@ export class HomepageInternal extends React.Component<
         dataIndex: "slug",
         key: "slug",
         render: (pkgName: string) => // Render the package name as a link (following above format)
-          <Link to={`/${this.props.context.selectedPackageSet!.slug}/${pkgName}`}>
+          <Link id={generateID(pkgName)} style={{color: "inherit"}} onMouseOver={() => underlineOnHover(generateID(pkgName))} to={`/${this.props.context.selectedPackageSet!.slug}/${pkgName}`}>
             {pkgName}
           </Link>
       },
@@ -144,23 +172,6 @@ export class HomepageInternal extends React.Component<
           <>{dateFormatter(new Date(lastUpdate))}</>
       }
     ];
-
-    // Formats date in ISO format
-    function dateFormatter(date: Date): string {
-      let dateTimeString = "";
-
-      // Date portion
-      let isoStr = date.toISOString();
-      dateTimeString += isoStr.substring(0, isoStr.lastIndexOf('T'));
-
-      dateTimeString += " ";
-
-      // Time portion
-      let timeStr = date.toTimeString();
-      dateTimeString += timeStr.split(' ')[0];
-
-      return dateTimeString;
-    }
 
     // Render and return
     return (
