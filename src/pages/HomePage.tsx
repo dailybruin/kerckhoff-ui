@@ -1,4 +1,4 @@
-import { Col, Row, Divider, Button, Icon, Table } from "antd";
+import { Col, Row, Divider, Button, Icon } from "antd";
 import React from "react";
 import { RouteProps, RouteChildrenProps } from "react-router";
 import { IPackage, IResponseUser } from "../commons/interfaces";
@@ -7,6 +7,7 @@ import { MetaInfoCard } from "../components/PSMetaInfoCard";
 import { IntegrationsInfoCard } from "../components/PSIntegrationsInfoCard";
 import styled from "styled-components";
 import { PackageCard } from "../components/PackageCard";
+import { AllPackagesTable } from "../components/AllPackagesTable";
 import {
   ScrollyBox,
   ScrollyItem,
@@ -14,7 +15,6 @@ import {
   ScrollyRow
 } from "../components/UIFragments";
 import { Link } from "react-router-dom";
-import Column from "antd/lib/table/Column";
 
 export class Homepage extends React.Component<RouteChildrenProps> {
   render() {
@@ -115,65 +115,6 @@ export class HomepageInternal extends React.Component<
   };
 
   render() {
-    // Generate CSS id for link
-    function generateID(pkgName: string) {
-      return "link-" + pkgName.replace('.', '-');   // CSS doesn't like '.' in its ID selectors, so replace them with dashes
-    }
-
-    // Change to underline on hover
-    function underlineOnHover(id: string) {
-      let link = document.querySelector(`#${id}`) as HTMLElement;
-      link.style.textDecoration = "underline";
-    }
-
-    // Formats date in ISO format: YYYY-MM-DD HH:MM
-    function dateFormatter(date: Date): string {
-      let dateTimeString = "";
-
-      // Date portion
-      let isoStr = date.toISOString();
-      dateTimeString += isoStr.substring(0, isoStr.lastIndexOf('T'));   // Returns date as YYYY-MM-DD
-
-      dateTimeString += " ";
-
-      // Time portion
-      let timeStr = date.toTimeString();
-      dateTimeString += timeStr.substring(0, timeStr.indexOf(" "));     // Returns time as HH:MM
-
-      return dateTimeString;
-    }
-
-    // Set up table for ALL PACKAGES
-    let tableColumns = [
-      // Package Name
-      {
-        title: "Package Name",
-        dataIndex: "slug",
-        key: "slug",
-        render: (pkgName: string) => // Render the package name as a link (following above format)
-          <Link id={generateID(pkgName)} style={{color: "inherit"}} onMouseOver={() => underlineOnHover(generateID(pkgName))} to={`/${this.props.context.selectedPackageSet!.slug}/${pkgName}`}>
-            {pkgName}
-          </Link>
-      },
-      // Creator
-      {
-        title: "Created By",
-        dataIndex: "created_by",
-        key: "created_by",
-        render: (createdByObj: IResponseUser) => // Format created by name as Last, First
-          <>{createdByObj.last_name + ", " + createdByObj.first_name}</>
-      },
-      // Last Update
-      {
-        title: "Last Updated",
-        dataIndex: "updated_at",
-        key: "updated_at",
-        render: (lastUpdate: string) => // Format date
-          <>{dateFormatter(new Date(lastUpdate))}</>
-      }
-    ];
-
-    // Render and return
     return (
       <>
         {this.props.context.selectedPackageSet ? (
@@ -217,10 +158,12 @@ export class HomepageInternal extends React.Component<
 
                   <Divider />
                   <h2>All Packages</h2>
-                  {/* <p>TODO</p> */}
-                  {<Table dataSource={this.state.displayedPackages} columns={tableColumns}>
-                    <Column />
-                  </Table>}
+                  {/*
+                    AllPackagesTable component displays the "All Packages" section as an antd table
+                    packages: IPackage[] - the packages to display
+                    linkDirectory: string - the directory which these packages are stored under, e.g. for /test/zinnia.unchartedterritory, pass "test" as the prop
+                  */}
+                  <AllPackagesTable packages={this.state.displayedPackages} linkDirectory={this.props.context.selectedPackageSet!.slug} />
                 </>
               ) : (
                 <h2>No Packages are found.</h2>
