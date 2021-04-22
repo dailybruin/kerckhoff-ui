@@ -1,7 +1,7 @@
 import { Col, Row, Divider, Button, Icon } from "antd";
 import React from "react";
 import { RouteProps, RouteChildrenProps } from "react-router";
-import { IPackage, IResponseUser } from "../commons/interfaces";
+import { IPackage, IUser, IResponseUser } from "../commons/interfaces";
 import { GlobalState, IGlobalState } from "../providers";
 import { MetaInfoCard } from "../components/PSMetaInfoCard";
 import { IntegrationsInfoCard } from "../components/PSIntegrationsInfoCard";
@@ -81,7 +81,91 @@ export class HomepageInternal extends React.Component<
     }
   }
 
-  renderPackageCards = () => {
+  renderMyPackages(): JSX.Element {
+    const PACKAGES = this.state.displayedPackages;
+
+    // Straight return if there are no packages to display
+    if (!PACKAGES)
+      return <p>Loading...</p>;
+
+    // Figure out which packages to display and render them accordingly
+    let packagesToDisplay: JSX.Element[] = [];
+    PACKAGES.forEach(pkg => {
+      // Get the user who created the package, and see if it matches the current user
+      let creator = (pkg as any).created_by as IResponseUser; // IPackage type doesn't define a 'created_by' field, but it's there
+      let currentUser = this.props.context.user as IUser;
+
+      // Only display if the user is the same
+      if (creator.id == currentUser.id) {
+        // Create package element
+        let pkgElement = (
+          <ScrollyItem key={pkg.id}>
+            <Link to={`/${this.props.context.selectedPackageSet!.slug}/${pkg.slug}`}>
+              <PackageCard package={pkg} />
+            </Link>
+          </ScrollyItem>
+        );
+
+        // Add it to the array of packages to display
+        packagesToDisplay.push(pkgElement);
+      }
+    });
+
+    // There may be a chance that all the packages are old
+    if (packagesToDisplay.length > 0) {
+      return (
+        <ScrollyRow>
+          {packagesToDisplay}
+        </ScrollyRow>
+      );
+    }
+    else return <p>No Packages Found</p>
+  }
+
+  renderRecentlyUpdatedPackages(): JSX.Element {
+    const PACKAGES = this.state.displayedPackages;
+    const MAX_TIME_DIFFERENCE_TO_SHOW = 7 * 1000 * 60 * 60 * 24;  // The first number is in days
+
+    // Straight return if there are no packages to display
+    if (!PACKAGES)
+      return <p>Loading...</p>;
+
+    // Figure out which packages to display and render them accordingly
+    let packagesToDisplay: JSX.Element[] = [];
+    PACKAGES.forEach(pkg => {
+      // Get current time and the time each package was last updated
+      let lastUpdate = new Date((pkg as any).updated_at);
+      let currentTime = new Date();
+      let timeDifference = currentTime.getTime() - lastUpdate.getTime();
+
+      // Only show if time difference is less than or equal to threshold
+      if (timeDifference <= MAX_TIME_DIFFERENCE_TO_SHOW) {
+        // Create package element
+        let pkgElement = (
+          <ScrollyItem key={pkg.id}>
+            <Link to={`/${this.props.context.selectedPackageSet!.slug}/${pkg.slug}`}>
+              <PackageCard package={pkg} />
+            </Link>
+          </ScrollyItem>
+        );
+
+        // Add it to the array of packages to display
+        packagesToDisplay.push(pkgElement);
+      }
+    });
+
+    // There may be a chance that all the packages are old
+    if (packagesToDisplay.length > 0) {
+      return (
+        <ScrollyRow>
+          {packagesToDisplay}
+        </ScrollyRow>
+      );
+    }
+    else return <p>No Recently Updated Packages</p>
+  }
+
+  /* renderPackageCards = () => {
     if (this.state.displayedPackages) {
       return (
         <ScrollyRow>
@@ -103,7 +187,7 @@ export class HomepageInternal extends React.Component<
     } else {
       return <h2>Loading...</h2>;
     }
-  };
+  }; */
 
   fetchPackages = async () => {
     const ops = this.props.context.modelOps;
@@ -148,13 +232,13 @@ export class HomepageInternal extends React.Component<
             <Col span={18}>
               {this.state.displayedPackages.length > 0 ? (
                 <>
-                  <h2>Recently Updated</h2>
-                  {this.renderPackageCards()}
+                  <h2>Recently Updated</h2> {/* Set the threshold for "Recently Updated in the function" */}
+                  {this.renderRecentlyUpdatedPackages()}
 
                   <Divider />
 
-                  <h2>My Packages</h2>
-                  {this.renderPackageCards()}
+                  <h2>My Packages</h2>  {/* Renders packages created by the current user */}
+                  {this.renderMyPackages()}
 
                   <Divider />
                   <h2>All Packages</h2>
