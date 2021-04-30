@@ -1,3 +1,7 @@
+.list-item {
+    color: inherit;
+}
+
 .list-item:hover {
     text-decoration: underline;
 }

@@ -49,7 +49,7 @@ export class AllPackagesTable extends React.Component<{packages: IPackage[], lin
 // Generate Link Component
 function generateLink(pkgName: string, linkDirectory: string): JSX.Element {
     return (
-        <Link className={"list-item"} style={{color: "inherit"}} to={`/${linkDirectory}/${pkgName}`}>
+        <Link className={"list-item"} to={`/${linkDirectory}/${pkgName}`}>
             {pkgName}
         </Link>
     );  

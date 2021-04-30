@@ -259,7 +259,7 @@ export class HomepageInternal extends React.Component<
                   {/* Let user choose how many recently updated packages to show */}
                   <div className={"line-under-scrolly"}>
                     <p className={"line-label"}>Number of packages to display:</p>
-                    <select id="number-recently-updated-packages-to-show" onChange={(e) => this.changeMaxNumberOfRecentlyUpdatedPackages(e)}>
+                    <select onChange={(e) => this.changeMaxNumberOfRecentlyUpdatedPackages(e)}>
                       <option value="5">5</option>
                       <option value="10" selected>10</option>
                       <option value="20">20</option>
