@@ -1,5 +1,5 @@
 import { Col, Row, Divider, Button, Icon } from "antd";
-import React from "react";
+import React, { ChangeEvent } from "react";
 import { RouteProps, RouteChildrenProps } from "react-router";
 import { IPackage, IUser, IResponseUser } from "../commons/interfaces";
 import { GlobalState, IGlobalState } from "../providers";
@@ -15,6 +15,7 @@ import {
   ScrollyRow
 } from "../components/UIFragments";
 import { Link } from "react-router-dom";
+import "./HomePage.css";
 
 export class Homepage extends React.Component<RouteChildrenProps> {
   render() {
@@ -122,37 +123,45 @@ export class HomepageInternal extends React.Component<
     else return <p>No Packages Found</p>
   }
 
+  MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW = 10;
   renderRecentlyUpdatedPackages(): JSX.Element {
-    const PACKAGES = this.state.displayedPackages;
-    const MAX_TIME_DIFFERENCE_TO_SHOW = 7 * 1000 * 60 * 60 * 24;  // The first number is in days
+    let packages = this.state.displayedPackages;
+    const MAX_NUMBER_OF_PACKAGES_TO_SHOW = this.MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW;  // Can change this, default 10
+
+    console.log(MAX_NUMBER_OF_PACKAGES_TO_SHOW);
 
     // Straight return if there are no packages to display
-    if (!PACKAGES)
+    if (!packages)
       return <p>Loading...</p>;
 
-    // Figure out which packages to display and render them accordingly
-    let packagesToDisplay: JSX.Element[] = [];
-    PACKAGES.forEach(pkg => {
-      // Get current time and the time each package was last updated
-      let lastUpdate = new Date((pkg as any).updated_at);
-      let currentTime = new Date();
-      let timeDifference = currentTime.getTime() - lastUpdate.getTime();
+    // Sort packages by date
+    packages = packages.sort((a: IPackage, b: IPackage): number => {
+      let aDate = new Date((a as any).updated_at), bDate = new Date((b as any).updated_at); // Type def doesn't have key 'updated_at', but it exists
 
-      // Only show if time difference is less than or equal to threshold
-      if (timeDifference <= MAX_TIME_DIFFERENCE_TO_SHOW) {
-        // Create package element
-        let pkgElement = (
-          <ScrollyItem key={pkg.id}>
-            <Link to={`/${this.props.context.selectedPackageSet!.slug}/${pkg.slug}`}>
-              <PackageCard package={pkg} />
-            </Link>
-          </ScrollyItem>
-        );
-
-        // Add it to the array of packages to display
-        packagesToDisplay.push(pkgElement);
-      }
+      if (aDate < bDate)      // aDate is before bDate, move to back
+        return 1;
+      else if (aDate > bDate) // aDate is after bDate, move to front
+        return -1;
+      else return 0;
     });
+
+    // Display the first MAX_NUMBER_OF_PACKAGES_TO_SHOW packages of the sorted array
+    let packagesToDisplay: JSX.Element[] = [];
+    let numPackages = packages.length;
+    for (let i = 0; i < numPackages && i < MAX_NUMBER_OF_PACKAGES_TO_SHOW; i++) {
+      const pkg = packages[i];
+
+      // Create package element
+      let pkgElement = (
+        <ScrollyItem key={pkg.id}>
+          <Link to={`/${this.props.context.selectedPackageSet!.slug}/${pkg.slug}`}>
+            <PackageCard package={pkg} />
+          </Link>
+        </ScrollyItem>
+      );
+
+      packagesToDisplay.push(pkgElement);
+    }
 
     // There may be a chance that all the packages are old
     if (packagesToDisplay.length > 0) {
@@ -163,6 +172,14 @@ export class HomepageInternal extends React.Component<
       );
     }
     else return <p>No Recently Updated Packages</p>
+  }
+
+  changeMaxNumberOfRecentlyUpdatedPackages(e: ChangeEvent<HTMLSelectElement>) {
+    const dropdown = e.target as HTMLSelectElement;
+    this.MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW = parseInt(dropdown.value);
+
+    // Force rerender
+    this.forceUpdate();
   }
 
   /* renderPackageCards = () => {
@@ -232,12 +249,30 @@ export class HomepageInternal extends React.Component<
             <Col span={18}>
               {this.state.displayedPackages.length > 0 ? (
                 <>
+                  {/* 
+                    Recently Updated Packages 
+                    Defaults to showing the 10 last updated packages
+                    Can be changed via dropdown box
+                  */}
                   <h2>Recently Updated</h2> {/* Set the threshold for "Recently Updated in the function" */}
                   {this.renderRecentlyUpdatedPackages()}
+                  {/* Let user choose how many recently updated packages to show */}
+                  <div className={"line-under-scrolly"}>
+                    <p className={"line-label"}>Number of packages to display:</p>
+                    <select id="number-recently-updated-packages-to-show" onChange={(e) => this.changeMaxNumberOfRecentlyUpdatedPackages(e)}>
+                      <option value="5">5</option>
+                      <option value="10" selected>10</option>
+                      <option value="20">20</option>
+                    </select>
+                  </div>
 
                   <Divider />
 
-                  <h2>My Packages</h2>  {/* Renders packages created by the current user */}
+                  {/* 
+                    My Packages
+                    Renders packages created by the current user
+                  */}
+                  <h2>My Packages</h2>
                   {this.renderMyPackages()}
 
                   <Divider />

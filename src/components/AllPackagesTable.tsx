@@ -6,6 +6,8 @@ import Column from "antd/lib/table/Column";
 
 import { IPackage, IResponseUser } from '../commons/interfaces';
 
+import './AllPackagesTable.css';
+
 // Table to display all packages on the homepage
 export class AllPackagesTable extends React.Component<{packages: IPackage[], linkDirectory: string}> {
     render() {
@@ -46,26 +48,11 @@ export class AllPackagesTable extends React.Component<{packages: IPackage[], lin
 
 // Generate Link Component
 function generateLink(pkgName: string, linkDirectory: string): JSX.Element {
-    // CSS doesn't like '.' in its ID selectors, so replace them with dashes
-    let generatedID = "link-" + pkgName.split('.').join('-'); 
-
-    // Underline the link on hover
-    function underlineOnHover(id: string) {
-        let link = document.querySelector(`#${id}`) as HTMLElement;
-        link.style.textDecoration = "underline";
-    }
-
-    // Remove the underline after mouse moves away
-    function removeUnderline(id: string) {
-        let link = document.querySelector(`#${id}`) as HTMLElement;
-        link.style.textDecoration = "none";
-    }
-    
     return (
-        <Link id={generatedID} style={{color: "inherit"}} onMouseOver={() => underlineOnHover(generatedID)} onMouseLeave={() => removeUnderline(generatedID)} to={`/${linkDirectory}/${pkgName}`}>
+        <Link className={"list-item"} style={{color: "inherit"}} to={`/${linkDirectory}/${pkgName}`}>
             {pkgName}
         </Link>
-    );
+    );  
 }
 
 // Formats date in ISO format: YYYY-MM-DD HH:MM
