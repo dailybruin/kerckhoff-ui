@@ -82,6 +82,7 @@ export class HomepageInternal extends React.Component<
     }
   }
 
+  // Renders all packages that were created by the user
   renderMyPackages(): JSX.Element {
     const PACKAGES = this.state.displayedPackages;
 
@@ -123,18 +124,17 @@ export class HomepageInternal extends React.Component<
     else return <p>No Packages Found</p>
   }
 
+  // Renders N of the most recently updated packages
   MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW = 10;
   renderRecentlyUpdatedPackages(): JSX.Element {
     let packages = this.state.displayedPackages;
     const MAX_NUMBER_OF_PACKAGES_TO_SHOW = this.MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW;  // Can change this, default 10
 
-    console.log(MAX_NUMBER_OF_PACKAGES_TO_SHOW);
-
     // Straight return if there are no packages to display
     if (!packages)
       return <p>Loading...</p>;
 
-    // Sort packages by date
+    // Sort packages by date - this will be very inefficient if there are many packages
     packages = packages.sort((a: IPackage, b: IPackage): number => {
       let aDate = new Date((a as any).updated_at), bDate = new Date((b as any).updated_at); // Type def doesn't have key 'updated_at', but it exists
 
@@ -181,30 +181,6 @@ export class HomepageInternal extends React.Component<
     // Force rerender
     this.forceUpdate();
   }
-
-  /* renderPackageCards = () => {
-    if (this.state.displayedPackages) {
-      return (
-        <ScrollyRow>
-          {this.state.displayedPackages.map(p => {
-            return (
-              <ScrollyItem key={p.id}>
-                <Link
-                  to={`/${this.props.context.selectedPackageSet!.slug}/${
-                    p.slug
-                  }`}
-                >
-                  <PackageCard package={p} />
-                </Link>
-              </ScrollyItem>
-            );
-          })}
-        </ScrollyRow>
-      );
-    } else {
-      return <h2>Loading...</h2>;
-    }
-  }; */
 
   fetchPackages = async () => {
     const ops = this.props.context.modelOps;
