@@ -1,5 +1,5 @@
 import { Col, Row, Divider, Button, Icon } from "antd";
-import React, { ChangeEvent } from "react";
+import React, { ChangeEvent, useState } from "react";
 import { RouteProps, RouteChildrenProps } from "react-router";
 import { IPackage, IUser, IResponseUser } from "../commons/interfaces";
 import { GlobalState, IGlobalState } from "../providers";
@@ -32,11 +32,12 @@ export class HomepageInternal extends React.Component<
   {
     displayedPackages: IPackage[];
     is404: boolean;
+    maxNumOfRecentlyUpdatedPackagesToShow: number;
   }
 > {
   constructor(props: any) {
     super(props);
-    this.state = { displayedPackages: [], is404: false };
+    this.state = { displayedPackages: [], is404: false, maxNumOfRecentlyUpdatedPackagesToShow: 10 };
   }
 
   componentDidUpdate(
@@ -125,10 +126,9 @@ export class HomepageInternal extends React.Component<
   }
 
   // Renders N of the most recently updated packages
-  MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW = 10;
   renderRecentlyUpdatedPackages(): JSX.Element {
     let packages = this.state.displayedPackages;
-    const MAX_NUMBER_OF_PACKAGES_TO_SHOW = this.MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW;  // Can change this, default 10
+    const MAX_NUMBER_OF_PACKAGES_TO_SHOW = this.state.maxNumOfRecentlyUpdatedPackagesToShow;  // Can change this, default 10
 
     // Straight return if there are no packages to display
     if (!packages)
@@ -172,14 +172,6 @@ export class HomepageInternal extends React.Component<
       );
     }
     else return <p>No Recently Updated Packages</p>
-  }
-
-  changeMaxNumberOfRecentlyUpdatedPackages(e: ChangeEvent<HTMLSelectElement>) {
-    const dropdown = e.target as HTMLSelectElement;
-    this.MAX_NUMBER_OF_RECENTLY_UPDATED_PACKAGES_TO_SHOW = parseInt(dropdown.value);
-
-    // Force rerender
-    this.forceUpdate();
   }
 
   fetchPackages = async () => {
@@ -235,10 +227,11 @@ export class HomepageInternal extends React.Component<
                   {/* Let user choose how many recently updated packages to show */}
                   <div className={"line-under-scrolly"}>
                     <p className={"line-label"}>Number of packages to display:</p>
-                    <select onChange={(e) => this.changeMaxNumberOfRecentlyUpdatedPackages(e)}>
+                    <select onChange={(e) => this.setState({maxNumOfRecentlyUpdatedPackagesToShow: parseInt(e.target.value)})}>
                       <option value="5">5</option>
                       <option value="10" selected>10</option>
                       <option value="20">20</option>
+                      <option value="50">50</option>
                     </select>
                   </div>
 
@@ -256,9 +249,9 @@ export class HomepageInternal extends React.Component<
                   {/*
                     AllPackagesTable component displays the "All Packages" section as an antd table
                     packages: IPackage[] - the packages to display
-                    linkDirectory: string - the directory which these packages are stored under, e.g. for /test/zinnia.unchartedterritory, pass "test" as the prop
+                    packageSetName: string - the directory which these packages are stored under, e.g. for /test/zinnia.unchartedterritory, pass "test" as the prop
                   */}
-                  <AllPackagesTable packages={this.state.displayedPackages} linkDirectory={this.props.context.selectedPackageSet!.slug} />
+                  <AllPackagesTable packages={this.state.displayedPackages} packageSetName={this.props.context.selectedPackageSet!.slug} />
                 </>
               ) : (
                 <h2>No Packages are found.</h2>

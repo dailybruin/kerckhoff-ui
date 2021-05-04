@@ -4,12 +4,14 @@ import { Link } from "react-router-dom";
 import { Table } from "antd";
 import Column from "antd/lib/table/Column";
 
+import { DateTime } from 'luxon';
+
 import { IPackage, IResponseUser } from '../commons/interfaces';
 
 import './AllPackagesTable.css';
 
 // Table to display all packages on the homepage
-export class AllPackagesTable extends React.Component<{packages: IPackage[], linkDirectory: string}> {
+export class AllPackagesTable extends React.Component<{packages: IPackage[], packageSetName: string}> {
     render() {
         // Set up table's columns for ALL PACKAGES section
         let tableColumns = [
@@ -18,7 +20,7 @@ export class AllPackagesTable extends React.Component<{packages: IPackage[], lin
                 title: "Package Name",
                 dataIndex: "slug",
                 key: "slug",
-                render: (pkgName: string) => generateLink(pkgName, this.props.linkDirectory)
+                render: (pkgName: string) => generateLink(pkgName, this.props.packageSetName)
             },
             // Creator
             {
@@ -34,7 +36,7 @@ export class AllPackagesTable extends React.Component<{packages: IPackage[], lin
                 dataIndex: "updated_at",
                 key: "updated_at",
                 render: (lastUpdate: string) => // Format date to YYYY-MM-DD HH:MM
-                    <>{dateFormatter(new Date(lastUpdate))}</>
+                    <>{DateTime.fromISO(lastUpdate).toFormat("yyyy-LL-dd HH:mm")}</>
             }
         ];
 
@@ -47,27 +49,10 @@ export class AllPackagesTable extends React.Component<{packages: IPackage[], lin
 }
 
 // Generate Link Component
-function generateLink(pkgName: string, linkDirectory: string): JSX.Element {
+function generateLink(pkgName: string, packageSetName: string): JSX.Element {
     return (
-        <Link className={"list-item"} to={`/${linkDirectory}/${pkgName}`}>
+        <Link className={"list-item"} to={`/${packageSetName}/${pkgName}`}>
             {pkgName}
         </Link>
     );  
-}
-
-// Formats date in ISO format: YYYY-MM-DD HH:MM
-function dateFormatter(date: Date): string {
-    let dateTimeString = "";
-
-    // Date portion
-    let isoStr = date.toISOString();
-    dateTimeString += isoStr.substring(0, isoStr.lastIndexOf('T'));   // Returns date as YYYY-MM-DD
-
-    dateTimeString += " ";
-
-    // Time portion
-    let timeStr = date.toTimeString();
-    dateTimeString += timeStr.substring(0, timeStr.indexOf(" "));     // Returns time as HH:MM
-
-    return dateTimeString;
 }
