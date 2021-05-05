@@ -1,12 +1,13 @@
-import { Col, Row, Divider, Button, Icon, Table } from "antd";
-import React from "react";
+import { Col, Row, Divider, Button, Icon } from "antd";
+import React, { ChangeEvent, useState } from "react";
 import { RouteProps, RouteChildrenProps } from "react-router";
-import { IPackage } from "../commons/interfaces";
+import { IPackage, IUser, IResponseUser } from "../commons/interfaces";
 import { GlobalState, IGlobalState } from "../providers";
 import { MetaInfoCard } from "../components/PSMetaInfoCard";
 import { IntegrationsInfoCard } from "../components/PSIntegrationsInfoCard";
 import styled from "styled-components";
 import { PackageCard } from "../components/PackageCard";
+import { AllPackagesTable } from "../components/AllPackagesTable";
 import {
   ScrollyBox,
   ScrollyItem,
@@ -14,7 +15,7 @@ import {
   ScrollyRow
 } from "../components/UIFragments";
 import { Link } from "react-router-dom";
-import Column from "antd/lib/table/Column";
+import "./HomePage.css";
 
 export class Homepage extends React.Component<RouteChildrenProps> {
   render() {
@@ -31,11 +32,12 @@ export class HomepageInternal extends React.Component<
   {
     displayedPackages: IPackage[];
     is404: boolean;
+    maxNumOfRecentlyUpdatedPackagesToShow: number;
   }
 > {
   constructor(props: any) {
     super(props);
-    this.state = { displayedPackages: [], is404: false };
+    this.state = { displayedPackages: [], is404: false, maxNumOfRecentlyUpdatedPackagesToShow: 10 };
   }
 
   componentDidUpdate(
@@ -81,29 +83,96 @@ export class HomepageInternal extends React.Component<
     }
   }
 
-  renderPackageCards = () => {
-    if (this.state.displayedPackages) {
+  // Renders all packages that were created by the user
+  renderMyPackages(): JSX.Element {
+    const PACKAGES = this.state.displayedPackages;
+
+    // Straight return if there are no packages to display
+    if (!PACKAGES)
+      return <p>Loading...</p>;
+
+    // Figure out which packages to display and render them accordingly
+    let packagesToDisplay: JSX.Element[] = [];
+    PACKAGES.forEach(pkg => {
+      // Get the user who created the package, and see if it matches the current user
+      let creator = (pkg as any).created_by as IResponseUser; // IPackage type doesn't define a 'created_by' field, but it's there
+      let currentUser = this.props.context.user as IUser;
+
+      // Only display if the user is the same
+      if (creator.id == currentUser.id) {
+        // Create package element
+        let pkgElement = (
+          <ScrollyItem key={pkg.id}>
+            <Link to={`/${this.props.context.selectedPackageSet!.slug}/${pkg.slug}`}>
+              <PackageCard package={pkg} />
+            </Link>
+          </ScrollyItem>
+        );
+
+        // Add it to the array of packages to display
+        packagesToDisplay.push(pkgElement);
+      }
+    });
+
+    // There may be a chance that all the packages are old
+    if (packagesToDisplay.length > 0) {
       return (
         <ScrollyRow>
-          {this.state.displayedPackages.map(p => {
-            return (
-              <ScrollyItem key={p.id}>
-                <Link
-                  to={`/${this.props.context.selectedPackageSet!.slug}/${
-                    p.slug
-                  }`}
-                >
-                  <PackageCard package={p} />
-                </Link>
-              </ScrollyItem>
-            );
-          })}
+          {packagesToDisplay}
         </ScrollyRow>
       );
-    } else {
-      return <h2>Loading...</h2>;
     }
-  };
+    else return <p>No Packages Found</p>
+  }
+
+  // Renders N of the most recently updated packages
+  renderRecentlyUpdatedPackages(): JSX.Element {
+    let packages = this.state.displayedPackages;
+    const MAX_NUMBER_OF_PACKAGES_TO_SHOW = this.state.maxNumOfRecentlyUpdatedPackagesToShow;  // Can change this, default 10
+
+    // Straight return if there are no packages to display
+    if (!packages)
+      return <p>Loading...</p>;
+
+    // Sort packages by date - this will be very inefficient if there are many packages
+    packages = packages.sort((a: IPackage, b: IPackage): number => {
+      let aDate = new Date((a as any).updated_at), bDate = new Date((b as any).updated_at); // Type def doesn't have key 'updated_at', but it exists
+
+      if (aDate < bDate)      // aDate is before bDate, move to back
+        return 1;
+      else if (aDate > bDate) // aDate is after bDate, move to front
+        return -1;
+      else return 0;
+    });
+
+    // Display the first MAX_NUMBER_OF_PACKAGES_TO_SHOW packages of the sorted array
+    let packagesToDisplay: JSX.Element[] = [];
+    let numPackages = packages.length;
+    for (let i = 0; i < numPackages && i < MAX_NUMBER_OF_PACKAGES_TO_SHOW; i++) {
+      const pkg = packages[i];
+
+      // Create package element
+      let pkgElement = (
+        <ScrollyItem key={pkg.id}>
+          <Link to={`/${this.props.context.selectedPackageSet!.slug}/${pkg.slug}`}>
+            <PackageCard package={pkg} />
+          </Link>
+        </ScrollyItem>
+      );
+
+      packagesToDisplay.push(pkgElement);
+    }
+
+    // There may be a chance that all the packages are old
+    if (packagesToDisplay.length > 0) {
+      return (
+        <ScrollyRow>
+          {packagesToDisplay}
+        </ScrollyRow>
+      );
+    }
+    else return <p>No Recently Updated Packages</p>
+  }
 
   fetchPackages = async () => {
     const ops = this.props.context.modelOps;
@@ -148,20 +217,41 @@ export class HomepageInternal extends React.Component<
             <Col span={18}>
               {this.state.displayedPackages.length > 0 ? (
                 <>
-                  <h2>Recently Updated</h2>
-                  {this.renderPackageCards()}
+                  {/* 
+                    Recently Updated Packages 
+                    Defaults to showing the 10 last updated packages
+                    Can be changed via dropdown box
+                  */}
+                  <h2>Recently Updated</h2> {/* Set the threshold for "Recently Updated in the function" */}
+                  {this.renderRecentlyUpdatedPackages()}
+                  {/* Let user choose how many recently updated packages to show */}
+                  <div className={"line-under-scrolly"}>
+                    <p className={"line-label"}>Number of packages to display:</p>
+                    <select onChange={(e) => this.setState({maxNumOfRecentlyUpdatedPackagesToShow: parseInt(e.target.value)})}>
+                      <option value="5">5</option>
+                      <option value="10" selected>10</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                    </select>
+                  </div>
 
                   <Divider />
 
+                  {/* 
+                    My Packages
+                    Renders packages created by the current user
+                  */}
                   <h2>My Packages</h2>
-                  {this.renderPackageCards()}
+                  {this.renderMyPackages()}
 
                   <Divider />
                   <h2>All Packages</h2>
-                  <p>TODO</p>
-                  {/* <Table dataSource={this.state.displayedPackages}>
-                    <Column />
-                  </Table> */}
+                  {/*
+                    AllPackagesTable component displays the "All Packages" section as an antd table
+                    packages: IPackage[] - the packages to display
+                    packageSetName: string - the directory which these packages are stored under, e.g. for /test/zinnia.unchartedterritory, pass "test" as the prop
+                  */}
+                  <AllPackagesTable packages={this.state.displayedPackages} packageSetName={this.props.context.selectedPackageSet!.slug} />
                 </>
               ) : (
                 <h2>No Packages are found.</h2>
