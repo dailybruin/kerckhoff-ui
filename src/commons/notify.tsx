@@ -14,3 +14,10 @@ export const notifyError = (message: string, duration?: number) =>
     duration: duration ? +duration : 5,
     icon: <Icon type="exclamation" style={{ color: "red" }} />
   });
+
+export const notifyInfo = (message: string, duration?: number) =>
+  notification.open({
+    message,
+    duration: duration ? +duration : 5,
+    icon: <Icon type="info-circle" style={{ color: "blue" }} />
+  });

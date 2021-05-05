@@ -21,7 +21,7 @@ import { VersionTimeline } from "../components/VersionTimeline";
 import { PackagePreviewDisplay } from "../components/PackagePreviewDisplay";
 import { DiffModal } from "../components/DiffModal";
 import { async } from "q";
-import { notifyOk } from "../commons/notify";
+import { notifyOk, notifyInfo } from "../commons/notify";
 
 const TreeNode = Tree.TreeNode;
 
@@ -54,6 +54,7 @@ export class PackageDetailPageInternal extends React.Component<
     isFetchingPreview: boolean;
     selectedVersion: number;
     showCreateVersionModal: boolean;
+    isPublishing: boolean;
   }
 > {
   constructor(props: any) {
@@ -65,7 +66,8 @@ export class PackageDetailPageInternal extends React.Component<
       versions: [],
       isFetchingPreview: false,
       selectedVersion: -1,
-      showCreateVersionModal: false
+      showCreateVersionModal: false,
+      isPublishing: false
     };
   }
 
@@ -198,12 +200,18 @@ export class PackageDetailPageInternal extends React.Component<
 
   handlePublish = async () => {
     const ops = this.props.context.modelOps!;
-    await ops.publishPackage(
+    this.setState({ isPublishing: true });
+    notifyInfo("Started publishing. This might take a while.");
+    const res = await ops.publishPackage(
       this.props.context.selectedPackageSet!,
       this.state.package!
     );
     await this.getPackageDetails();
-    notifyOk("Published Successfully!");
+    this.setState({ isPublishing: false });
+    if (res) {
+      // res will be undefined if unsuccessful due to interceptor
+      notifyOk("Published Successfully!");
+    }
   };
 
   sortedCachedProperties = () => {
@@ -315,6 +323,7 @@ export class PackageDetailPageInternal extends React.Component<
                   icon="export"
                   block
                   onClick={this.handlePublish}
+                  loading={this.state.isPublishing}
                   disabled={this.state.versions.length < 1}
                 >
                   Publish
