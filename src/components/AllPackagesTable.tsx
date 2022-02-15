@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Table } from "antd";
 import Column from "antd/lib/table/Column";
+import { PaginationConfig } from 'antd/lib/pagination';
 
 import { DateTime } from 'luxon';
 
@@ -10,8 +11,20 @@ import { IPackage, IResponseUser } from '../commons/interfaces';
 
 import './AllPackagesTable.css';
 
+export interface PackageSetInfo {
+    packageSetName: string,
+    packageSetSize: number
+}
+
 // Table to display all packages on the homepage
-export class AllPackagesTable extends React.Component<{packages: IPackage[], packageSetName: string}> {
+export class AllPackagesTable extends React.Component<
+    // Props
+    {
+        packageSetInfo: PackageSetInfo, 
+        packages: IPackage[], 
+        pageChangeHandler: (arg0: number) => void
+    }
+> {
     render() {
         // Set up table's columns for ALL PACKAGES section
         let tableColumns = [
@@ -20,7 +33,7 @@ export class AllPackagesTable extends React.Component<{packages: IPackage[], pac
                 title: "Package Name",
                 dataIndex: "slug",
                 key: "slug",
-                render: (pkgName: string) => generateLink(pkgName, this.props.packageSetName)
+                render: (pkgName: string) => generateLink(pkgName, this.props.packageSetInfo.packageSetName)
             },
             // Creator
             {
@@ -40,8 +53,15 @@ export class AllPackagesTable extends React.Component<{packages: IPackage[], pac
             }
         ];
 
+        // Configure pagination
+        const paginationConfig = {
+            total: this.props.packageSetInfo.packageSetSize,
+            showTotal: (total: number, range: [number, number]) => {return `${range[0]}-${range[1]} of ${total} items`},    // Text at bottom of page changer
+            onChange: this.props.pageChangeHandler
+        } as PaginationConfig
+
         return (
-            <Table dataSource={this.props.packages} columns={tableColumns}>
+            <Table pagination={paginationConfig} dataSource={this.props.packages} columns={tableColumns}>
                 <Column />
             </Table>
         );

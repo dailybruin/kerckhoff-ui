@@ -7,7 +7,7 @@ import { MetaInfoCard } from "../components/PSMetaInfoCard";
 import { IntegrationsInfoCard } from "../components/PSIntegrationsInfoCard";
 import styled from "styled-components";
 import { PackageCard } from "../components/PackageCard";
-import { AllPackagesTable } from "../components/AllPackagesTable";
+import { AllPackagesTable, PackageSetInfo } from "../components/AllPackagesTable";
 import {
   ScrollyBox,
   ScrollyItem,
@@ -33,11 +33,12 @@ export class HomepageInternal extends React.Component<
     displayedPackages: IPackage[];
     is404: boolean;
     maxNumOfRecentlyUpdatedPackagesToShow: number;
+    totalPackagesInSet: number
   }
 > {
   constructor(props: any) {
     super(props);
-    this.state = { displayedPackages: [], is404: false, maxNumOfRecentlyUpdatedPackagesToShow: 10 };
+    this.state = { displayedPackages: [], is404: false, maxNumOfRecentlyUpdatedPackagesToShow: 10, totalPackagesInSet: 0 };
   }
 
   componentDidUpdate(
@@ -57,7 +58,9 @@ export class HomepageInternal extends React.Component<
     this.syncPackages();
   }
 
-  async syncPackages(page = 1) {
+  async syncPackages(page?: number) {
+    console.log(`Now loading page ${page} of package set`);
+
     const ops = this.props.context.modelOps;
     const ps = this.props.context.packageSets;
 
@@ -70,15 +73,23 @@ export class HomepageInternal extends React.Component<
         : this.props.context.selectedPackageSet;
 
       if (ps) {
-        const packageResponse = await ops.getPackages(currentPs!);
+        // Get the correct page
+        let packageResponse;
+        if (page == undefined)
+          packageResponse = await ops.getPackages(currentPs!);
+        else
+          packageResponse = await ops.getPackages(currentPs!, undefined, undefined, page);
+        
         console.log("Got packages:", packageResponse);
+
         this.setState({
-          displayedPackages: packageResponse.data.results
+          displayedPackages: packageResponse.data.results,
+          totalPackagesInSet: packageResponse.data.count
         });
       } else {
         this.setState({
           is404: true
-        });
+        }); 
       }
     }
   }
@@ -174,12 +185,30 @@ export class HomepageInternal extends React.Component<
     else return <p>No Recently Updated Packages</p>
   }
 
-  fetchPackages = async () => {
+  // Set up AllPackagesTable
+  renderAllPackagesTable(): JSX.Element {
+    let packageSetInfo = {
+      packageSetName: this.props.context.selectedPackageSet!.slug,
+      packageSetSize: this.state.totalPackagesInSet
+    } as PackageSetInfo;
+
+    {/*
+      AllPackagesTable component displays the "All Packages" section as an antd table
+      packageInfo: IPackage[] - the packages to display
+      packageSetName: string - the directory which these packages are stored under, e.g. for /test/zinnia.unchartedterritory, pass "test" as the prop
+    */}
+    return (<AllPackagesTable packages={this.state.displayedPackages} packageSetInfo={packageSetInfo} pageChangeHandler={this.fetchPackages} />);
+  }
+
+  fetchPackages = async (pages?: number) => {
+    if (pages == undefined)
+      pages = 1;
+
     const ops = this.props.context.modelOps;
     const ps = this.props.context.selectedPackageSet;
     if (ops && ps) {
       await ops.fetchPackagesForPackageSet(ps);
-      this.syncPackages();
+      this.syncPackages(pages);
     }
   };
 
@@ -195,7 +224,7 @@ export class HomepageInternal extends React.Component<
               <Divider />
 
               <Button
-                onClick={this.fetchPackages}
+                onClick={() => this.fetchPackages()}
                 style={{ maxWidth: "200px" }}
                 block
               >
@@ -217,41 +246,12 @@ export class HomepageInternal extends React.Component<
             <Col span={18}>
               {this.state.displayedPackages.length > 0 ? (
                 <>
-                  {/* 
-                    Recently Updated Packages 
-                    Defaults to showing the 10 last updated packages
-                    Can be changed via dropdown box
-                  */}
-                  <h2>Recently Updated</h2> {/* Set the threshold for "Recently Updated in the function" */}
-                  {this.renderRecentlyUpdatedPackages()}
-                  {/* Let user choose how many recently updated packages to show */}
-                  <div className={"line-under-scrolly"}>
-                    <p className={"line-label"}>Number of packages to display:</p>
-                    <select onChange={(e) => this.setState({maxNumOfRecentlyUpdatedPackagesToShow: parseInt(e.target.value)})}>
-                      <option value="5">5</option>
-                      <option value="10" selected>10</option>
-                      <option value="20">20</option>
-                      <option value="50">50</option>
-                    </select>
-                  </div>
-
-                  <Divider />
-
-                  {/* 
-                    My Packages
-                    Renders packages created by the current user
-                  */}
-                  <h2>My Packages</h2>
-                  {this.renderMyPackages()}
-
-                  <Divider />
-                  <h2>All Packages</h2>
                   {/*
-                    AllPackagesTable component displays the "All Packages" section as an antd table
-                    packages: IPackage[] - the packages to display
-                    packageSetName: string - the directory which these packages are stored under, e.g. for /test/zinnia.unchartedterritory, pass "test" as the prop
+                    All Packages
+                    Renders all packages in the package set; handles pagination
                   */}
-                  <AllPackagesTable packages={this.state.displayedPackages} packageSetName={this.props.context.selectedPackageSet!.slug} />
+                  <h2>All Packages</h2>
+                  {this.renderAllPackagesTable()}
                 </>
               ) : (
                 <h2>No Packages are found.</h2>
@@ -272,3 +272,35 @@ export class HomepageInternal extends React.Component<
 }
 
 export default Homepage;
+
+/*
+Temporarily put this here
+                  // {/*
+                  //  Recently Updated Packages 
+                  //  Defaults to showing the 10 last updated packages
+                  //  Can be changed via dropdown box
+                  // }
+                  <h2>Recently Updated</h2> // {/* Set the threshold for "Recently Updated in the function" }
+                  {this.renderRecentlyUpdatedPackages()}
+                  {/* Let user choose how many recently updated packages to show }
+                  <div className={"line-under-scrolly"}>
+                    <p className={"line-label"}>Number of packages to display:</p>
+                    <select onChange={(e) => this.setState({maxNumOfRecentlyUpdatedPackagesToShow: parseInt(e.target.value)})}>
+                      <option value="5">5</option>
+                      <option value="10" selected>10</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                    </select>
+                  </div>
+
+                  <Divider />
+
+                  {/* 
+                    My Packages
+                    Renders packages created by the current user
+                  }
+                  <h2>My Packages</h2>
+                  {this.renderMyPackages()}
+
+                  <Divider /> 
+*/
