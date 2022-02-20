@@ -41,14 +41,14 @@ export class ModelOperations {
   async getPackages(
     ps: IPackageSet,
     ordering: PackageOrderingField = "updated_at",
-    descending: boolean = false,  // Sort ascending by default (a-z)
+    ascending: boolean = true,  // Sort ascending by default (a-z)
     page: number = 1              // Default page is page 1
   ) {
     return this.axios.get<IPackageResponse>(
       `/package-sets/${ps.slug}/packages/`,
       { 
         params: { 
-          ordering: `${descending ? "-" : ""}${ordering}`,
+          ordering: `${ascending ? "" : "-"}${ordering}`,
           page: `${page}`
         } 
       }

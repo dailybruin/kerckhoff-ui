@@ -5,3 +5,21 @@
 .list-item:hover {
     text-decoration: underline;
 }
+
+.line-under-scrolly {
+    float: right;
+    display: inline-flex;
+    justify-content: flex-end;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    margin-right: 0px;
+    width: 40%;
+    z-index: 999;
+}
+
+.line-under-scrolly > .line-label {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+    margin-right: 0.6em;
+    max-width: 75%;
+}

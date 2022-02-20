@@ -58,7 +58,7 @@ export class HomepageInternal extends React.Component<
     this.syncPackages();
   }
 
-  async syncPackages(page?: number) {
+  async syncPackages(page?: number, ascending?: boolean) {
     console.log(`Now loading page ${page} of package set`);
 
     const ops = this.props.context.modelOps;
@@ -76,9 +76,9 @@ export class HomepageInternal extends React.Component<
         // Get the correct page
         let packageResponse;
         if (page == undefined)
-          packageResponse = await ops.getPackages(currentPs!);
+          packageResponse = await ops.getPackages(currentPs!, undefined, ascending, undefined);
         else
-          packageResponse = await ops.getPackages(currentPs!, undefined, undefined, page);
+          packageResponse = await ops.getPackages(currentPs!, undefined, ascending, page);
         
         console.log("Got packages:", packageResponse);
 
@@ -200,7 +200,7 @@ export class HomepageInternal extends React.Component<
     return (<AllPackagesTable packages={this.state.displayedPackages} packageSetInfo={packageSetInfo} pageChangeHandler={this.fetchPackages} />);
   }
 
-  fetchPackages = async (pages?: number) => {
+  fetchPackages = async (pages?: number, ascending?: boolean) => {
     if (pages == undefined)
       pages = 1;
 
@@ -208,7 +208,7 @@ export class HomepageInternal extends React.Component<
     const ps = this.props.context.selectedPackageSet;
     if (ops && ps) {
       await ops.fetchPackagesForPackageSet(ps);
-      this.syncPackages(pages);
+      this.syncPackages(pages, ascending);
     }
   };
 
