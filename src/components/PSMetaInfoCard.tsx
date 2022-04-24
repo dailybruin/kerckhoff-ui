@@ -18,6 +18,7 @@ interface IMetaInfoCardState {
   edit: boolean;
   gdrive_url?: string;
   gdrive_id?: string;
+  saved: boolean; // whether the new drive link has been saved
 }
 
 export class MetaInfoCard extends React.Component<
@@ -29,7 +30,8 @@ export class MetaInfoCard extends React.Component<
     this.state = {
       edit: false,
       gdrive_url: undefined,
-      gdrive_id: undefined
+      gdrive_id: undefined,
+      saved: false, // whether the new drive link has been saved
     };
   }
 
@@ -114,6 +116,7 @@ export class MetaInfoCard extends React.Component<
     console.log(response);
 
     this.toggleEdit();
+    this.setState({ saved: true });
   };
 
   render() {
@@ -144,15 +147,20 @@ export class MetaInfoCard extends React.Component<
                   : undefined
               }
             >
+              
               <Icon
                 style={{ float: "right", paddingTop: "0.25em" }}
-                type="login"
+                type="folder-open"
               />
+              
             </a>
           </ContextHeader>
-          {!this.props.ps.metadata.google_drive && (
+
+          {/* Do not display "Google Drive configured" after save is clicked or if previously used */}
+          {(!(this.props.ps.metadata.google_drive || this.state.saved)) && (
             <WarnText>Google Drive is not configured!</WarnText>
           )}
+          
           <Input
             onChange={this.handleUrlUpdate}
             style={{ marginBottom: "0.5rem" }}
@@ -160,13 +168,7 @@ export class MetaInfoCard extends React.Component<
             value={this.state.gdrive_url}
             disabled={!this.state.edit}
           />
-          <Input
-            onChange={this.handleChange("gdrive_id")}
-            style={{ marginBottom: "0.5rem" }}
-            placeholder="Folder ID"
-            disabled={!this.state.edit}
-            value={this.state.gdrive_id}
-          />
+          
           {this.state.edit && (
             <Button
               size="small"
