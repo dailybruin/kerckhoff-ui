@@ -75,7 +75,7 @@ export class HomepageInternal extends React.Component<
       if (ps) {
         // Get the correct page
         let packageResponse;
-        if (page == undefined)
+        if (page === undefined)
           packageResponse = await ops.getPackages(currentPs!, undefined, ascending, undefined);
         else
           packageResponse = await ops.getPackages(currentPs!, undefined, ascending, page);
@@ -110,7 +110,7 @@ export class HomepageInternal extends React.Component<
       let currentUser = this.props.context.user as IUser;
 
       // Only display if the user is the same
-      if (creator.id == currentUser.id) {
+      if (creator.id === currentUser.id) {
         // Create package element
         let pkgElement = (
           <ScrollyItem key={pkg.id}>
@@ -192,16 +192,16 @@ export class HomepageInternal extends React.Component<
       packageSetSize: this.state.totalPackagesInSet
     } as PackageSetInfo;
 
-    {/*
+    /*
       AllPackagesTable component displays the "All Packages" section as an antd table
       packageInfo: IPackage[] - the packages to display
       packageSetName: string - the directory which these packages are stored under, e.g. for /test/zinnia.unchartedterritory, pass "test" as the prop
-    */}
+    */
     return (<AllPackagesTable packages={this.state.displayedPackages} packageSetInfo={packageSetInfo} pageChangeHandler={this.fetchPackages} />);
   }
 
   fetchPackages = async (pages?: number, ascending?: boolean) => {
-    if (pages == undefined)
+    if (pages === undefined)
       pages = 1;
 
     const ops = this.props.context.modelOps;
