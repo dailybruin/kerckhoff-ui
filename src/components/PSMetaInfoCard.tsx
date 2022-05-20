@@ -82,18 +82,20 @@ export class MetaInfoCard extends React.Component<
 
   handleUrlUpdate = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({
-      gdrive_url: event.target.value
+      gdrive_url: event.target.value,
     });
 
     try {
       const url = new URL(event.target.value);
       const id = url.pathname.split("/").pop();
-      if (id) {
-        this.setState({
-          gdrive_id: id
-        });
-      }
-    } catch {}
+      this.setState({
+        gdrive_id: id,
+      });
+    } catch {
+      this.setState({
+        gdrive_id: undefined,
+      });
+    }
   };
 
   handleSave = async () => {
@@ -165,6 +167,10 @@ export class MetaInfoCard extends React.Component<
             value={this.state.gdrive_url}
             disabled={!this.state.edit}
           />
+
+          {this.state.edit && !this.gdriveIsValid() && (
+            <p>Please enter a valid URL!</p>
+          )}
           
           {this.state.edit && (
             <Button
