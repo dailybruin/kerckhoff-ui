@@ -148,7 +148,7 @@ export class GlobalStateWrapper extends React.Component<{}, IGlobalState> {
         },
         () => {
           if (newPackageSet) {
-            this.setPackageSet(newPackageSet.slug);
+            this.setPackageSet(newPackageSet.slug, true);
           }
           p.resolve();
         }

@@ -18,7 +18,6 @@ interface IMetaInfoCardState {
   edit: boolean;
   gdrive_url?: string;
   gdrive_id?: string;
-  saved: boolean; // whether the new drive link has been saved
 }
 
 export class MetaInfoCard extends React.Component<
@@ -31,7 +30,6 @@ export class MetaInfoCard extends React.Component<
       edit: false,
       gdrive_url: undefined,
       gdrive_id: undefined,
-      saved: false, // whether the new drive link has been saved
     };
   }
 
@@ -116,7 +114,6 @@ export class MetaInfoCard extends React.Component<
     console.log(response);
 
     this.toggleEdit();
-    this.setState({ saved: true });
   };
 
   render() {
@@ -157,7 +154,7 @@ export class MetaInfoCard extends React.Component<
           </ContextHeader>
 
           {/* Do not display "Google Drive configured" after save is clicked or if previously used */}
-          {(!(this.props.ps.metadata.google_drive || this.state.saved)) && (
+          {(!(this.props.ps.metadata.google_drive)) && (
             <WarnText>Google Drive is not configured!</WarnText>
           )}
           
