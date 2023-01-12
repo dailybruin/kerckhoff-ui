@@ -41,7 +41,7 @@ export class LoginCallbackPageInternal extends React.Component<
   async componentDidMount() {
     const query = qs.parse(this.props.location!.search, {
       ignoreQueryPrefix: true
-    }) as IOAuthCallbackInfo;
+    }) as unknown as IOAuthCallbackInfo;
     console.log(query);
     try {
       const userInfoRes = await axios.get(OAUTH_URL, {
